@@ -1,0 +1,94 @@
+{
+  "settings": [
+    {
+      "key": "ai_enabled",
+      "value": "1"
+    },
+    {
+      "key": "ai_system_instruction",
+      "value": "أنت مساعد ذكي ومفيد لشركة الخطيب للتسويق والبرمجيات."
+    },
+    {
+      "key": "ai_voice_enabled",
+      "value": "0"
+    },
+    {
+      "key": "ai_voice_language",
+      "value": "ar"
+    },
+    {
+      "key": "clinic_name",
+      "value": "عيادتي"
+    },
+    {
+      "key": "clinic_description",
+      "value": "نظام إدارة العيادات"
+    },
+    {
+      "key": "clinic_logo",
+      "value": "/logo.png"
+    },
+    {
+      "key": "trial_days",
+      "value": "7"
+    }
+  ],
+  "logs": [
+    {
+      "id": 7,
+      "type": "debug-check",
+      "trigger_id": null,
+      "phone": "131392176419007@lid",
+      "content": "Checking: \"اريد  حجز موعد\" | Norm: \"اريد حجز موعد\" | Templates: 4",
+      "timestamp": "2026-01-05 16:49:15"
+    },
+    {
+      "id": 6,
+      "type": "auto-reply",
+      "trigger_id": 2,
+      "phone": "131392176419007@lid",
+      "content": "مرحباً بك! كيف يمكنني خدمتك؟",
+      "timestamp": "2026-01-05 16:48:40"
+    },
+    {
+      "id": 5,
+      "type": "debug-check",
+      "trigger_id": null,
+      "phone": "131392176419007@lid",
+      "content": "Checking: \"مرحبا\" | Norm: \"مرحبا\" | Templates: 4",
+      "timestamp": "2026-01-05 16:48:40"
+    },
+    {
+      "id": 4,
+      "type": "debug-check",
+      "trigger_id": null,
+      "phone": "131392176419007@lid",
+      "content": "Checking: \"(ضبط رسالة صوتية)\" | Norm: \"ضبط رساله صوتيه\" | Templates: 4",
+      "timestamp": "2026-01-05 16:47:58"
+    },
+    {
+      "id": 3,
+      "type": "debug-check",
+      "trigger_id": null,
+      "phone": "131392176419007@lid",
+      "content": "Checking: \"شو الخدمه الي بتقدموها\" | Norm: \"شو الخدمه الي بتقدموها\" | Templates: 4",
+      "timestamp": "2026-01-05 16:45:53"
+    },
+    {
+      "id": 2,
+      "type": "auto-reply",
+      "trigger_id": 2,
+      "phone": "131392176419007@lid",
+      "content": "مرحباً بك! كيف يمكنني خدمتك؟",
+      "timestamp": "2026-01-05 16:45:36"
+    },
+    {
+      "id": 1,
+      "type": "debug-check",
+      "trigger_id": null,
+      "phone": "131392176419007@lid",
+      "content": "Checking: \"مرحبا\" | Norm: \"مرحبا\" | Templates: 4",
+      "timestamp": "2026-01-05 16:45:35"
+    }
+  ]
+}

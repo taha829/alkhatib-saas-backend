@@ -1,0 +1,324 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  USER
+  AGENT
+}
+
+enum SubscriptionStatus {
+  FREE
+  TRIAL
+  ACTIVE
+  PAST_DUE
+  CANCELED
+}
+
+model User {
+  id                 Int                @id @default(autoincrement())
+  email              String             @unique
+  password           String
+  name               String?
+  avatar             String?
+  role               UserRole           @default(USER)
+  status             String             @default("active")
+  expiryDate         DateTime?
+  subscriptionStatus SubscriptionStatus @default(FREE)
+  stripeCustomerId   String?            @unique
+  planId             Int?
+  plan               Plan?              @relation(fields: [planId], references: [id])
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  // SaaS Relations
+  contacts           Contact[]
+  groups             Group[]
+  notifications      Notification[]
+  payments           Payment[]
+}
+
+model Plan {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String?
+  price       Decimal  @db.Decimal(10, 2)
+  interval    String   @default("month") // month, year
+  stripeId    String?  @unique
+  features    String?  // JSON string of features/limits
+  users       User[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Payment {
+  id            Int      @id @default(autoincrement())
+  userId        Int
+  user          User     @relation(fields: [userId], references: [id])
+  amount        Decimal  @db.Decimal(10, 2)
+  method        String   @default("cash") // cash, bank_transfer, etc.
+  status        String   @default("pending") // pending, completed, rejected
+  transactionId String?  @unique
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Group {
+  id           Int       @id @default(autoincrement())
+  userId       Int
+  user         User      @relation(fields: [userId], references: [id])
+  name         String
+  platform     String
+  status       String    @default("active")
+  membersCount Int       @default(0)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  posts        Post[]
+  contacts     Contact[] @relation("ContactGroups")
+}
+
+model Contact {
+  id                Int       @id @default(autoincrement())
+  userId            Int
+  user              User      @relation(fields: [userId], references: [id])
+  name              String?
+  phone             String
+  platform          String?
+  source            String?
+  extractedFrom     String?
+  status            String    @default("new")
+  email             String?
+  jobTitle          String?
+  location          String?
+  interests         String?
+  ageRange          String?
+  profileUrl        String?
+  pipelineId        Int?
+  stageId           Int?
+  dealValue         Decimal?  @db.Decimal(10, 2)
+  priority          String    @default("medium")
+  expectedCloseDate DateTime?
+  probability       Int       @default(0)
+  lastVisit         DateTime?
+  medicalNotes      String?
+  patientStatus     String    @default("new")
+  bloodType         String?
+  allergies         String?
+  chronicDiseases   String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  notifications     Notification[]
+  medicalRecords    MedicalRecord[]
+  appointment       Appointment[]
+  tags              CustomerTag[]  @relation("ContactTags")
+  groups            Group[]        @relation("ContactGroups")
+
+  @@unique([userId, phone])
+}
+
+model Post {
+  id            Int      @id @default(autoincrement())
+  groupId       Int
+  group         Group    @relation(fields: [groupId], references: [id])
+  content       String?
+  commentsCount Int      @default(0)
+  createdAt     DateTime @default(now())
+}
+
+model Pipeline {
+  id        Int      @id @default(autoincrement())
+  name      String
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+  stages    Stage[]
+}
+
+model Stage {
+  id         Int      @id @default(autoincrement())
+  pipelineId Int
+  pipeline   Pipeline @relation(fields: [pipelineId], references: [id], onDelete: Cascade)
+  name       String
+  color      String?
+  position   Int
+  createdAt  DateTime @default(now())
+}
+
+model WhatsAppChat {
+  id              Int           @id @default(autoincrement())
+  phone           String        @unique
+  name            String?
+  lastMessage     String?
+  lastMessageTime String?
+  unreadCount     Int           @default(0)
+  status          String        @default("active")
+  currentAgent    String        @default("general")
+  createdAt       DateTime      @default(now())
+  messages        WhatsAppMessage[]
+}
+
+model WhatsAppMessage {
+  id        Int          @id @default(autoincrement())
+  chatId    Int
+  chat      WhatsAppChat @relation(fields: [chatId], references: [id])
+  messageId String?
+  fromMe    Boolean
+  content   String?
+  timestamp DateTime     @default(now())
+  status    String       @default("sent")
+}
+
+model AutoReplyTemplate {
+  id        Int      @id @default(autoincrement())
+  trigger   String
+  response  String
+  isActive  Boolean  @default(true)
+  priority  Int      @default(0)
+  createdAt DateTime @default(now())
+  logs      WhatsAppLog[]
+}
+
+model Notification {
+  id            Int      @id @default(autoincrement())
+  userId        Int
+  user          User     @relation(fields: [userId], references: [id])
+  type          String
+  title         String
+  message       String
+  priority      String   @default("MEDIUM")
+  isRead        Boolean  @default(false)
+  contactId     Int?
+  contact       Contact? @relation(fields: [contactId], references: [id])
+  appointmentId Int?
+  appointment   Appointment? @relation(fields: [appointmentId], references: [id])
+  metadata      String?
+  createdAt     DateTime @default(now())
+  readAt        DateTime?
+}
+
+model WhatsAppLog {
+  id         Int               @id @default(autoincrement())
+  type       String
+  triggerId  Int?
+  template   AutoReplyTemplate? @relation(fields: [triggerId], references: [id])
+  phone      String?
+  content    String?
+  timestamp  DateTime          @default(now())
+}
+
+model Setting {
+  key   String @id
+  value String
+}
+
+model SystemInfo {
+  key   String @id
+  value String
+}
+
+model CustomerTag {
+  id       Int       @id @default(autoincrement())
+  name     String    @unique
+  color    String?
+  contacts Contact[] @relation("ContactTags")
+}
+
+model Appointment {
+  id              Int          @id @default(autoincrement())
+  phone           String
+  customerName    String?
+  appointmentDate DateTime
+  status          String       @default("confirmed")
+  notes           String?
+  patientId       Int?
+  contact         Contact?     @relation(fields: [patientId], references: [id])
+  doctorId        Int?
+  duration        Int          @default(30)
+  type            String       @default("consultation")
+  reminderSent    Boolean      @default(false)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  notifications   Notification[]
+  medicalRecords  MedicalRecord[]
+}
+
+model TelegramChat {
+  id           Int               @id @default(autoincrement())
+  chatId       BigInt            @unique
+  username     String?
+  firstName    String?
+  lastMessage  String?
+  unreadCount  Int               @default(0)
+  status       String            @default("active")
+  currentAgent String            @default("general")
+  createdAt    DateTime          @default(now())
+  messages     TelegramMessage[]
+}
+
+model TelegramMessage {
+  id        Int          @id @default(autoincrement())
+  chatId    Int
+  chat      TelegramChat @relation(fields: [chatId], references: [id])
+  messageId Int?
+  fromMe    Boolean?
+  content   String?
+  type      String       @default("text")
+  timestamp DateTime     @default(now())
+}
+
+model Campaign {
+  id              Int                 @id @default(autoincrement())
+  name            String
+  message         String
+  platform        String
+  status          String              @default("pending")
+  totalRecipients Int                 @default(0)
+  sentCount       Int                 @default(0)
+  failedCount     Int                 @default(0)
+  createdAt       DateTime            @default(now())
+  recipients      CampaignRecipient[]
+}
+
+model CampaignRecipient {
+  id           Int      @id @default(autoincrement())
+  campaignId   Int
+  campaign     Campaign @relation(fields: [campaignId], references: [id])
+  phone        String?
+  name         String?
+  status       String   @default("pending")
+  errorMessage String?
+}
+
+model Service {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  price       String?
+  category    String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+}
+
+model MedicalRecord {
+  id            Int         @id @default(autoincrement())
+  appointmentId Int
+  appointment   Appointment @relation(fields: [appointmentId], references: [id])
+  patientId     Int?
+  contact       Contact?    @relation(fields: [patientId], references: [id])
+  diagnosis     String?
+  treatment     String?
+  feeAmount     Decimal?    @db.Decimal(10, 2)
+  feeDetails    String?
+  createdAt     DateTime    @default(now())
+}
